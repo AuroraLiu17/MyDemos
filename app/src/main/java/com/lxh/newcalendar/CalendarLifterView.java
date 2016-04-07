@@ -9,54 +9,57 @@ import android.util.AttributeSet;
 /**
  * Created by liuxiaohui on 4/6/16.
  */
-public class MyStageView extends StageCollapsingView {
+public class CalendarLifterView extends LifterView {
 
-    private static final int STAGE_WEEK = BASE_STAGE_INDEX;
-    private static final int STAGE_MONTH = BASE_STAGE_INDEX + 1;
-    private static final int STAGE_FULL_SCREEN = BASE_STAGE_INDEX + 2;
+    private static final int FLOOR_WEEK = BASE_FLOOR_INDEX;
+    private static final int FLOOR_MONTH = BASE_FLOOR_INDEX + 1;
+    private static final int FLOOR_FULL_SCREEN = BASE_FLOOR_INDEX + 2;
 
-    public MyStageView(Context context) {
+    public CalendarLifterView(Context context) {
         this(context, null);
     }
 
-    public MyStageView(Context context, AttributeSet attrs) {
+    public CalendarLifterView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public MyStageView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public CalendarLifterView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        setStageIndex(STAGE_MONTH);
+        goToFloor(FLOOR_FULL_SCREEN);
     }
 
     @Override
-    public void setStageIndex(int stageIndex) {
-        super.setStageIndex(stageIndex);
-        setBackgroundColor(getColorForStage(getStageIndex()));
+    public void goToFloor(int floorIndex) {
+        super.goToFloor(floorIndex);
+        setBackgroundColor(getColorForFloor(getCurrentFloorIndex()));
         requestLayout();
     }
 
     @Override
-    public int getStageCount() {
+    public int getFloorCount() {
         return 3;
     }
 
     @Override
-    public int getHeightForStage(int stageIndex) {
-        switch (stageIndex) {
-            case STAGE_WEEK:
+    public int getHeightForFloor(int floorIndex) {
+        if (floorIndex < 0 || floorIndex >= getFloorCount()) {
+            throw new IndexOutOfBoundsException("Total floor count " + getFloorCount() + ", floorIndex " + floorIndex);
+        }
+        switch (floorIndex) {
+            case FLOOR_WEEK:
                 return 150;
-            case STAGE_MONTH:
+            case FLOOR_MONTH:
                 return 800;
             default:
                 return 1200;
         }
     }
 
-    public static int getColorForStage(int stageIndex) {
-        switch (stageIndex) {
-            case STAGE_WEEK:
+    public static int getColorForFloor(int floorIndex) {
+        switch (floorIndex) {
+            case FLOOR_WEEK:
                 return Color.BLUE;
-            case STAGE_MONTH:
+            case FLOOR_MONTH:
                 return Color.RED;
             default:
                 return Color.GREEN;

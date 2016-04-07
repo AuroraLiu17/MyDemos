@@ -1,11 +1,10 @@
 package com.lxh.newcalendar;
 
 import android.content.Context;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.view.ViewCompat;
-import android.support.v4.view.WindowInsetsCompat;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,31 +14,31 @@ import android.widget.FrameLayout;
 /**
  * Created by liuxiaohui on 4/6/16.
  *
- * StageCollapsingToolbarLayout is a wrapper for {@link StageCollapsingView} which implements a collapsing app bar.
- * It is designed to have a direct child of {@link StageCollapsingView}, which has several height stage,
+ * StageCollapsingToolbarLayout is a wrapper for {@link LifterView} which implements a collapsing app bar.
+ * It is designed to have a direct child of {@link LifterView}, which has several height stage,
  * and when the scroll view scroll or fling,
- * the {@link StageCollapsingView} can achieve a height stage at most 1 step from current stage.
+ * the {@link LifterView} can achieve a height stage at most 1 step from current stage.
  *
- * It is suggest that no child of this layout is below the {@link StageCollapsingView},
- * which makes the {@link StageCollapsingView} to stretch the layout
+ * It is suggest that no child of this layout is below the {@link LifterView},
+ * which makes the {@link LifterView} to stretch the layout
  *
  */
-public class StageCollapsingToolbarLayout extends FrameLayout {
+public class LifterToolbarLayout extends FrameLayout implements Lifter {
 
-    private boolean mRefreshStageCollapsingView = true;
-    private StageCollapsingView mStageCollapsingView;
+    private boolean mRefreshLifterView = true;
+    private LifterView mLifterView;
 
     private AppBarLayout.OnOffsetChangedListener mOnOffsetChangedListener;
 
-    public StageCollapsingToolbarLayout(Context context) {
+    public LifterToolbarLayout(Context context) {
         this(context, null);
     }
 
-    public StageCollapsingToolbarLayout(Context context, AttributeSet attrs) {
+    public LifterToolbarLayout(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public StageCollapsingToolbarLayout(Context context, AttributeSet attrs, int defStyleAttr) {
+    public LifterToolbarLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         setWillNotDraw(true);
     }
@@ -74,8 +73,10 @@ public class StageCollapsingToolbarLayout extends FrameLayout {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        ensureStageCollapsingView();
-        int height = getHeightWithMargins(mStageCollapsingView);
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        ensureLifterView();
+
+        int height = getHeightWithMargins(mLifterView);
         int specMode = MeasureSpec.getMode(heightMeasureSpec);
         int specSize = MeasureSpec.getSize(heightMeasureSpec);
 
@@ -92,9 +93,38 @@ public class StageCollapsingToolbarLayout extends FrameLayout {
         super.onLayout(changed, left, top, right, bottom);
 
         // Finally, set our minimum height to enable proper AppBarLayout collapsing
-        if (mStageCollapsingView != null) {
-            setMinimumHeight(getMinHeightWithMargins(mStageCollapsingView));
+        if (mLifterView != null) {
+            setMinimumHeight(getMinHeightWithMargins(mLifterView));
         }
+    }
+
+    @Override
+    public int getFloorCount() {
+        if (mLifterView != null)
+            return mLifterView.getFloorCount();
+        return 1;
+    }
+
+    @Override
+    public int getCurrentFloorIndex() {
+        if (mLifterView != null)
+            return mLifterView.getCurrentFloorIndex();
+        return 0;
+    }
+
+    @Override
+    public int getHeightForFloor(int floorIndex) {
+        if (mLifterView != null) {
+            int viewHeight = mLifterView.getHeightForFloor(floorIndex);
+            return viewHeight + getMargins(mLifterView);
+        }
+        return getMeasuredHeight();
+    }
+
+    @Override
+    public void goToFloor(int floorIndex) {
+        if (mLifterView != null)
+            mLifterView.goToFloor(floorIndex);
     }
 
     private static int getMargins(@NonNull final View view) {
@@ -108,8 +138,8 @@ public class StageCollapsingToolbarLayout extends FrameLayout {
 
     private static int getHeightWithMargins(@NonNull final View view) {
         int viewHeight;
-        if (view instanceof StageCollapsingView) {
-            viewHeight = ((StageCollapsingView) view).getCurrentStageHeight();
+        if (view instanceof LifterView) {
+            viewHeight = ((LifterView) view).getCurrentFloorHeight();
         } else {
             viewHeight = view.getHeight();
         }
@@ -118,30 +148,34 @@ public class StageCollapsingToolbarLayout extends FrameLayout {
 
     private static int getMinHeightWithMargins(@NonNull final View view) {
         int viewHeight;
-        if (view instanceof StageCollapsingView) {
-            viewHeight = ((StageCollapsingView) view).getLowerStageHeight();
+        if (view instanceof LifterView) {
+            viewHeight = ((LifterView) view).getLowerFloorHeight();
         } else {
-            viewHeight = view.getMinimumHeight();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                viewHeight = view.getMinimumHeight();
+            } else {
+                viewHeight = view.getHeight();
+            }
         }
         return viewHeight + getMargins(view);
     }
 
-    private void ensureStageCollapsingView() {
-        if (!mRefreshStageCollapsingView) {
+    private void ensureLifterView() {
+        if (!mRefreshLifterView) {
             return;
         }
 
-        if (mStageCollapsingView == null) {
-            // Find a StageCollapsingView from direct child
+        if (mLifterView == null) {
+            // Find a LifterView from direct child
             for (int i = 0, count = getChildCount(); i < count; i++) {
                 final View child = getChildAt(i);
-                if (child instanceof StageCollapsingView) {
-                    mStageCollapsingView = (StageCollapsingView) child;
+                if (child instanceof LifterView) {
+                    mLifterView = (LifterView) child;
                     break;
                 }
             }
         }
-        mRefreshStageCollapsingView = false;
+        mRefreshLifterView = false;
     }
 
     private class OffsetUpdateListener implements AppBarLayout.OnOffsetChangedListener {
@@ -152,13 +186,13 @@ public class StageCollapsingToolbarLayout extends FrameLayout {
             for (int i = 0, z = getChildCount(); i < z; i++) {
                 final View child = getChildAt(i);
 
-                if (child == mStageCollapsingView) {
-                    // StageCollapsingView, adjust height
-                    int stageHeight = mStageCollapsingView.getCurrentStageHeight();
+                if (child == mLifterView) {
+                    // LifterView, adjust height
+                    int stageHeight = mLifterView.getCurrentFloorHeight();
                     int targetHeight = stageHeight + verticalOffset;
                     LayoutParams lp = (LayoutParams) child.getLayoutParams();
                     lp.height = targetHeight;
-                    mStageCollapsingView.setLayoutParams(lp);
+                    mLifterView.setLayoutParams(lp);
                 }
                 child.offsetTopAndBottom(-verticalOffset);
             }

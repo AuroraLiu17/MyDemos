@@ -5,18 +5,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="${relativePackage}.${activityClass}">
-    <android.support.design.widget.AppBarLayout
+    <com.lxh.newcalendar.LifterAppBarLayout
         android:id="@+id/app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fitsSystemWindows="true">
-        <com.lxh.newcalendar.StageCollapsingToolbarLayout
+        <com.lxh.newcalendar.LifterToolbarLayout
             android:id="@+id/collapsing_toolbar_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:layout_scrollFlags="scroll|exitUntilCollapsed|snap"
         >
-            <com.lxh.newcalendar.MyStageView
+            <com.lxh.newcalendar.CalendarLifterView
                 android:id="@+id/collapsing_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -38,9 +38,9 @@
                     android:textAppearance="@style/ToolBarTitle"
                 />
             </android.support.v7.widget.Toolbar>
-        </com.lxh.newcalendar.StageCollapsingToolbarLayout>
+        </com.lxh.newcalendar.LifterToolbarLayout>
 
-    </android.support.design.widget.AppBarLayout>
+    </com.lxh.newcalendar.LifterAppBarLayout>
 
 
     <android.support.v4.widget.NestedScrollView
