@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">NewCalendar</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="card_string">How you setup the Android Support Libraries in your development project depends on what features you want to use and what range of Android platform versions you want to support with your application.</string>
+
+
+    <string name="nav_go_today">Today</string>
+    <string name="nav_scan">Scan</string>
+</resources>
