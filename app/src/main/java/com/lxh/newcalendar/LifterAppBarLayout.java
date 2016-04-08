@@ -7,7 +7,6 @@ import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.View;
 
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
 
