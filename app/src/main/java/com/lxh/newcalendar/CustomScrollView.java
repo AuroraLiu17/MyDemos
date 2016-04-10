@@ -119,22 +119,22 @@ public class CustomScrollView extends ImageView implements GestureDetector.OnGes
         invalidate();//这里必须调用invalidate()才能保证computeScroll()会被调用，否则不一定会刷新界面，看不到滚动效果
     }
 
-//    @Override
-//    public void computeScroll() {
-//        if (mScroller.computeScrollOffset()) {
-//            //这里调用View的scrollTo()完成实际的滚动
-//            scrollTo(mScroller.getCurrX(), mScroller.getCurrY());
-//            Log.e("GD", "scrollTo:" + mScroller.getCurrX() +" ," + mScroller.getCurrY()
-//                    +" ," + getLeft() +" ," + getTop());
-////            Log.e("GD", "offsetTop:" + (mScroller.getCurrY() - getTop()));
-////            offsetTopAndBottom(mScroller.getCurrY() - getTop());
-////            Log.e("GD", "offsetLeft:" + (mScroller.getCurrX() - getLeft()));
-////            offsetLeftAndRight(mScroller.getCurrX() - getLeft());
-//            //必须调用该方法，否则不一定能看到滚动效果
-//            postInvalidate();
-//        }
-//        super.computeScroll();
-//    }
+    @Override
+    public void computeScroll() {
+        if (mScroller.computeScrollOffset()) {
+            //这里调用View的scrollTo()完成实际的滚动
+            scrollTo(mScroller.getCurrX(), mScroller.getCurrY());
+            Log.e("GD", "scrollTo:" + mScroller.getCurrX() +" ," + mScroller.getCurrY()
+                    +" ," + getLeft() +" ," + getTop());
+//            Log.e("GD", "offsetTop:" + (mScroller.getCurrY() - getTop()));
+//            offsetTopAndBottom(mScroller.getCurrY() - getTop());
+//            Log.e("GD", "offsetLeft:" + (mScroller.getCurrX() - getLeft()));
+//            offsetLeftAndRight(mScroller.getCurrX() - getLeft());
+            //必须调用该方法，否则不一定能看到滚动效果
+            postInvalidate();
+        }
+        super.computeScroll();
+    }
 
     @Override
     public void scrollTo(int x, int y) {

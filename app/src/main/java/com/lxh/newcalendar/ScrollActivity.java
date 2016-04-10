@@ -27,12 +27,12 @@ public class ScrollActivity extends Activity {
             case R.id.up_btn:
                 mImageView.scrollBy(0, -20);
                 mCustomView.scrollBy(0, 20);
-                mLifterView.scrollBy(0, 20);
+                mLifterView.smoothScrollBy(200, 500);
                 break;
             case R.id.down_btn:
                 mImageView.scrollBy(0, 20);
                 mCustomView.scrollBy(0, -20);
-                mLifterView.scrollBy(0, -20);
+                mLifterView.smoothScrollBy(200, -500);
                 break;
         }
     }

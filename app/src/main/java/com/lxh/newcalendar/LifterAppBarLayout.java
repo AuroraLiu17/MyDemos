@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Created by liuxiaohui on 4/7/16.
  */
-@CoordinatorLayout.DefaultBehavior(LifterAppBarLayout.Behavior.class)
+//@CoordinatorLayout.DefaultBehavior(LifterAppBarLayout.Behavior.class)
 public class LifterAppBarLayout extends AppBarLayout {
     private final List<OnFloorChangedListener> mFloorChangeListeners;
 
