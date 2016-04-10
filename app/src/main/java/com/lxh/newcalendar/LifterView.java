@@ -25,6 +25,24 @@ public abstract class LifterView extends View implements Lifter {
     }
 
     @Override
+    public int getLowerFloor() {
+        int lowerFloorIndex = BASE_FLOOR_INDEX;
+        if (mFloorIndex > BASE_FLOOR_INDEX) {
+            lowerFloorIndex = mFloorIndex - 1;
+        }
+        return lowerFloorIndex;
+    }
+
+    @Override
+    public int getHigherFloor() {
+        int higherFloorIndex = getFloorCount() - 1;
+        if (mFloorIndex < getFloorCount() - 2) {
+            higherFloorIndex = mFloorIndex + 1;
+        }
+        return higherFloorIndex;
+    }
+
+    @Override
     public void goToFloor(int floorIndex) {
         if (floorIndex < 0 || floorIndex >= getFloorCount()) {
             throw new IndexOutOfBoundsException("Total floor count " + getFloorCount() + ", go to floor " + floorIndex);
@@ -39,19 +57,11 @@ public abstract class LifterView extends View implements Lifter {
     }
 
     public int getLowerFloorHeight() {
-        int lowerFloorIndex = BASE_FLOOR_INDEX;
-        if (mFloorIndex > BASE_FLOOR_INDEX) {
-            lowerFloorIndex = mFloorIndex - 1;
-        }
-        return getHeightForFloor(lowerFloorIndex);
+        return getHeightForFloor(getLowerFloor());
     }
 
     public int getHigherFloorHeight() {
-        int higherFloorIndex = getFloorCount() - 1;
-        if (mFloorIndex < getFloorCount() - 2) {
-            higherFloorIndex = mFloorIndex + 1;
-        }
-        return getHeightForFloor(higherFloorIndex);
+        return getHeightForFloor(getHigherFloor());
     }
 
     public LifterView(Context context) {

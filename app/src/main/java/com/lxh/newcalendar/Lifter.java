@@ -24,6 +24,9 @@ public interface Lifter {
      */
     int getHeightForFloor(int floorIndex);
 
+    int getLowerFloor();
+    int getHigherFloor();
+
     /**
      * Return which floor is in now
      * @return int current floor index
@@ -36,10 +39,4 @@ public interface Lifter {
      */
     void goToFloor(int floorIndex);
 
-//
-//    int getCurrentStageHeight();
-//
-//    int getLowerStageHeight();
-//
-//    int getHigherStageHeight();
 }

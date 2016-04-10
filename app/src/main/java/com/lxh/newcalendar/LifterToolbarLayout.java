@@ -3,7 +3,6 @@ package com.lxh.newcalendar;
 import android.content.Context;
 import android.os.Build;
 import android.support.annotation.NonNull;
-import android.support.design.widget.AppBarLayout;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.View;
@@ -28,7 +27,7 @@ public class LifterToolbarLayout extends FrameLayout implements Lifter {
     private boolean mRefreshLifterView = true;
     private LifterView mLifterView;
 
-    private AppBarLayout.OnOffsetChangedListener mOnOffsetChangedListener;
+    private CustomCalendarContainer.OnOffsetChangedListener mOnOffsetChangedListener;
 
     public LifterToolbarLayout(Context context) {
         this(context, null);
@@ -49,11 +48,11 @@ public class LifterToolbarLayout extends FrameLayout implements Lifter {
 
         // Add an OnOffsetChangedListener if possible
         final ViewParent parent = getParent();
-        if (parent instanceof AppBarLayout) {
+        if (parent instanceof CustomCalendarContainer) {
             if (mOnOffsetChangedListener == null) {
                 mOnOffsetChangedListener = new OffsetUpdateListener();
             }
-            ((AppBarLayout) parent).addOnOffsetChangedListener(mOnOffsetChangedListener);
+            ((CustomCalendarContainer) parent).addOnOffsetChangedListener(mOnOffsetChangedListener);
         }
 
         // We're attached, so lets request an inset dispatch
@@ -64,8 +63,8 @@ public class LifterToolbarLayout extends FrameLayout implements Lifter {
     protected void onDetachedFromWindow() {
         // Remove our OnOffsetChangedListener if possible and it exists
         final ViewParent parent = getParent();
-        if (mOnOffsetChangedListener != null && parent instanceof AppBarLayout) {
-            ((AppBarLayout) parent).removeOnOffsetChangedListener(mOnOffsetChangedListener);
+        if (mOnOffsetChangedListener != null && parent instanceof CustomCalendarContainer) {
+            ((CustomCalendarContainer) parent).removeOnOffsetChangedListener(mOnOffsetChangedListener);
         }
 
         super.onDetachedFromWindow();
@@ -92,7 +91,7 @@ public class LifterToolbarLayout extends FrameLayout implements Lifter {
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
 
-        // Finally, set our minimum height to enable proper AppBarLayout collapsing
+        // Finally, set our minimum height to enable proper CustomCalendarContainer collapsing
         if (mLifterView != null) {
             setMinimumHeight(getMinHeightWithMargins(mLifterView));
         }
@@ -122,9 +121,27 @@ public class LifterToolbarLayout extends FrameLayout implements Lifter {
     }
 
     @Override
+    public int getLowerFloor() {
+        return mLifterView.getLowerFloor();
+    }
+
+    @Override
+    public int getHigherFloor() {
+        return mLifterView.getHigherFloor();
+    }
+
+    @Override
     public void goToFloor(int floorIndex) {
         if (mLifterView != null)
             mLifterView.goToFloor(floorIndex);
+    }
+
+    public int getLowerFloorHeight() {
+        return mLifterView.getLowerFloorHeight();
+    }
+
+    public int getHigherFloorHeight() {
+        return mLifterView.getHigherFloorHeight();
     }
 
     private static int getMargins(@NonNull final View view) {
@@ -178,9 +195,9 @@ public class LifterToolbarLayout extends FrameLayout implements Lifter {
         mRefreshLifterView = false;
     }
 
-    private class OffsetUpdateListener implements AppBarLayout.OnOffsetChangedListener {
+    private class OffsetUpdateListener implements CustomCalendarContainer.OnOffsetChangedListener {
         @Override
-        public void onOffsetChanged(AppBarLayout layout, int verticalOffset) {
+        public void onOffsetChanged(CustomCalendarContainer layout, int verticalOffset) {
             final int scrollRange = layout.getTotalScrollRange();
 
             for (int i = 0, z = getChildCount(); i < z; i++) {

@@ -10,28 +10,35 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fitsSystemWindows="true">
-        <com.lxh.newcalendar.CalendarLifterView
-            android:id="@+id/collapsing_view"
+        <com.lxh.newcalendar.LifterToolbarLayout
+            android:id="@+id/collapsing_toolbar_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="?attr/actionBarSize"
-        />
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:elevation="6dp"
-            app:layout_collapseMode="pin"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed|snap"
         >
-            <TextView
-                android:id="@+id/toolbar_title"
-                android:layout_width="wrap_content"
+            <com.lxh.newcalendar.CalendarLifterView
+                android:id="@+id/collapsing_view"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="2016/4/6"
-                android:textAppearance="@style/ToolBarTitle"
+                android:layout_marginTop="?attr/actionBarSize"
             />
-        </android.support.v7.widget.Toolbar>
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:elevation="6dp"
+                app:layout_collapseMode="pin"
+            >
+                <TextView
+                    android:id="@+id/toolbar_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="2016/4/6"
+                    android:textAppearance="@style/ToolBarTitle"
+                />
+            </android.support.v7.widget.Toolbar>
+        </com.lxh.newcalendar.LifterToolbarLayout>
     </com.lxh.newcalendar.CustomCalendarContainer>
 
 

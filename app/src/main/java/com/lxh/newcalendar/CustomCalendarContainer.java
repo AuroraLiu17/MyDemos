@@ -1,5 +1,6 @@
 package com.lxh.newcalendar;
 
+import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -15,6 +16,7 @@ import android.support.v4.view.*;
 import android.support.v4.widget.ScrollerCompat;
 import android.util.AttributeSet;
 import android.view.*;
+import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.LinearLayout;
 
@@ -58,10 +60,6 @@ public class CustomCalendarContainer extends LinearLayout {
     private int mUpPreScrollRange = INVALID_SCROLL_RANGE;
     private int mUpScrollRange = INVALID_SCROLL_RANGE;
 
-//    boolean mHaveChildWithInterpolator;
-
-//    private float mTargetElevation;
-
     private int mPendingAction = PENDING_ACTION_NONE;
 
     private int mCurrentMode = PENDING_ACTION_WEEK;
@@ -72,14 +70,6 @@ public class CustomCalendarContainer extends LinearLayout {
 
     public CustomCalendarContainer(Context context) {
         this(context, null);
-//        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.AppBarLayout,
-//                0, R.style.Widget_Design_AppBarLayout);
-//        mTargetElevation = a.getDimensionPixelSize(R.styleable.AppBarLayout_elevation, 0);
-//        setBackgroundDrawable(a.getDrawable(R.styleable.AppBarLayout_android_background));
-//        if (a.hasValue(R.styleable.AppBarLayout_expanded)) {
-//            setExpanded(a.getBoolean(R.styleable.AppBarLayout_expanded, false));
-//        }
-//        a.recycle();
     }
 
     public CustomCalendarContainer(Context context, AttributeSet attrs) {
@@ -137,18 +127,6 @@ public class CustomCalendarContainer extends LinearLayout {
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
         invalidateScrollRanges();
-
-//        mHaveChildWithInterpolator = false;
-//        for (int i = 0, z = getChildCount(); i < z; i++) {
-//            final View child = getChildAt(i);
-//            final CustomCalendarContainer.LayoutParams childLp = (CustomCalendarContainer.LayoutParams) child.getLayoutParams();
-//            final Interpolator interpolator = childLp.getScrollInterpolator();
-//
-//            if (interpolator != null) {
-//                mHaveChildWithInterpolator = true;
-//                break;
-//            }
-//        }
     }
 
     private void invalidateScrollRanges() {
@@ -167,6 +145,30 @@ public class CustomCalendarContainer extends LinearLayout {
                     + " not support horizontal orientation");
         }
         super.setOrientation(orientation);
+    }
+
+    void goDown() {
+        for (int i = 0, z = getChildCount(); i < z; i++) {
+            final View child = getChildAt(i);
+            if (child instanceof LifterToolbarLayout) {
+                // The drop between higher floor and lower floor
+                LifterToolbarLayout lifterToolbarLayout = (LifterToolbarLayout)child;
+                lifterToolbarLayout.goToFloor(lifterToolbarLayout.getHigherFloor());
+            }
+        }
+        invalidateScrollRanges();
+    }
+
+    void goUp() {
+        for (int i = 0, z = getChildCount(); i < z; i++) {
+            final View child = getChildAt(i);
+            if (child instanceof LifterToolbarLayout) {
+                // The drop between higher floor and lower floor
+                LifterToolbarLayout lifterToolbarLayout = (LifterToolbarLayout)child;
+                lifterToolbarLayout.goToFloor(lifterToolbarLayout.getLowerFloor());
+            }
+        }
+        invalidateScrollRanges();
     }
 
     /**
@@ -197,31 +199,6 @@ public class CustomCalendarContainer extends LinearLayout {
         mPendingAction = mode | (animate ? PENDING_ACTION_ANIMATE_ENABLED : 0);
         requestLayout();
     }
-//
-//    @Override
-//    protected boolean checkLayoutParams(ViewGroup.LayoutParams p) {
-//        return p instanceof CustomCalendarContainer.LayoutParams;
-//    }
-//
-//    @Override
-//    protected CustomCalendarContainer.LayoutParams generateDefaultLayoutParams() {
-//        return new CustomCalendarContainer.LayoutParams(CustomCalendarContainer.LayoutParams.MATCH_PARENT, CustomCalendarContainer.LayoutParams.WRAP_CONTENT);
-//    }
-//
-//    @Override
-//    public CustomCalendarContainer.LayoutParams generateLayoutParams(AttributeSet attrs) {
-//        return new CustomCalendarContainer.LayoutParams(getContext(), attrs);
-//    }
-//
-//    @Override
-//    protected CustomCalendarContainer.LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
-//        if (p instanceof LinearLayout.LayoutParams) {
-//            return new LayoutParams((LinearLayout.LayoutParams) p);
-//        } else if (p instanceof MarginLayoutParams) {
-//            return new LayoutParams((MarginLayoutParams) p);
-//        }
-//        return new CustomCalendarContainer.LayoutParams(p);
-//    }
 
     /**
      * Returns the scroll range of all children.
@@ -237,16 +214,12 @@ public class CustomCalendarContainer extends LinearLayout {
         for (int i = 0, z = getChildCount(); i < z; i++) {
             final View child = getChildAt(i);
             final CustomCalendarContainer.LayoutParams lp = (CustomCalendarContainer.LayoutParams) child.getLayoutParams();
-            final int childHeight = child.getMeasuredHeight();
 
-            if (child instanceof LifterView) {
-                // We're set to scroll so add the child's height
-                range += childHeight + lp.topMargin + lp.bottomMargin;
-                range -= ViewCompat.getMinimumHeight(child);
-            } else {
-                // As soon as a view doesn't have the scroll flag, we end the range calculation.
-                // This is because views below can not scroll under a fixed view.
-                break;
+            if (child instanceof LifterToolbarLayout) {
+                // The drop between higher floor and lower floor
+                LifterToolbarLayout lifterToolbarLayout = (LifterToolbarLayout)child;
+                range += lifterToolbarLayout.getHigherFloorHeight() - lifterToolbarLayout.getLowerFloorHeight()
+                        + lp.topMargin + lp.bottomMargin;
             }
         }
         return mTotalScrollRange = Math.max(0, range - getTopInset());
@@ -263,23 +236,23 @@ public class CustomCalendarContainer extends LinearLayout {
         return getTotalScrollRange();
     }
 
-    /**
-     * Return the scroll range when scrolling down from a nested pre-scroll.
-     */
-    private int getDownNestedPreScrollRange() {
-        if (mDownPreScrollRange != INVALID_SCROLL_RANGE) {
-            // If we already have a valid value, return it
-            return mDownPreScrollRange;
-        }
-
-        int range = 0;
-        for (int i = getChildCount() - 1; i >= 0; i--) {
-            final View child = getChildAt(i);
-            final CustomCalendarContainer.LayoutParams lp = (CustomCalendarContainer.LayoutParams) child.getLayoutParams();
-            final int childHeight = child.getMeasuredHeight();
-        }
-        return mDownPreScrollRange = Math.max(0, range - getTopInset());
-    }
+//    /**
+//     * Return the scroll range when scrolling down from a nested pre-scroll.
+//     */
+//    private int getDownNestedPreScrollRange() {
+//        if (mDownPreScrollRange != INVALID_SCROLL_RANGE) {
+//            // If we already have a valid value, return it
+//            return mDownPreScrollRange;
+//        }
+//
+//        int range = 0;
+//        for (int i = getChildCount() - 1; i >= 0; i--) {
+//            final View child = getChildAt(i);
+//            final CustomCalendarContainer.LayoutParams lp = (CustomCalendarContainer.LayoutParams) child.getLayoutParams();
+//            final int childHeight = child.getMeasuredHeight();
+//        }
+//        return mDownPreScrollRange = Math.max(0, range - getTopInset());
+//    }
 
     /**
      * Return the scroll range when scrolling down from a nested scroll.
@@ -293,20 +266,10 @@ public class CustomCalendarContainer extends LinearLayout {
         int range = 0;
         for (int i = 0, z = getChildCount(); i < z; i++) {
             final View child = getChildAt(i);
-            final CustomCalendarContainer.LayoutParams lp = (CustomCalendarContainer.LayoutParams) child.getLayoutParams();
-            int childHeight = child.getMeasuredHeight();
-            childHeight += lp.topMargin + lp.bottomMargin;
-
-//            final int flags = lp.mScrollFlags;
-
-            if (child instanceof LifterView) {
-                // We're set to scroll so add the child's height
-                range += childHeight;
-                range -= ViewCompat.getMinimumHeight(child) + getTopInset();
-                break;
-            } else {
-                // As soon as a view doesn't have the scroll flag, we end the range calculation.
-                // This is because views below can not scroll under a fixed view.
+            if (child instanceof LifterToolbarLayout) {
+                LifterToolbarLayout lifterToolbarLayout = (LifterToolbarLayout)child;
+                range += lifterToolbarLayout.getHigherFloorHeight() - lifterToolbarLayout.getLowerFloorHeight() -
+                        getTopInset();
                 break;
             }
         }
@@ -356,131 +319,6 @@ public class CustomCalendarContainer extends LinearLayout {
 
         return insets;
     }
-
-//    public static class LayoutParams extends LinearLayout.LayoutParams {
-//
-//        /** @hide */
-//        @IntDef(flag=true, value={
-//                SCROLL_FLAG_SCROLL,
-//                SCROLL_FLAG_EXIT_UNTIL_COLLAPSED,
-//                SCROLL_FLAG_ENTER_ALWAYS,
-//                SCROLL_FLAG_ENTER_ALWAYS_COLLAPSED,
-//                SCROLL_FLAG_SNAP
-//        })
-//        @Retention(RetentionPolicy.SOURCE)
-//        public @interface ScrollFlags {}
-//
-//        /**
-//         * The view will be scroll in direct relation to scroll events. This flag needs to be
-//         * set for any of the other flags to take effect. If any sibling views
-//         * before this one do not have this flag, then this value has no effect.
-//         */
-//        public static final int SCROLL_FLAG_SCROLL = 0x1;
-//
-//        /**
-//         * When exiting (scrolling off screen) the view will be scrolled until it is
-//         * 'collapsed'. The collapsed height is defined by the view's minimum height.
-//         *
-//         * @see ViewCompat#getMinimumHeight(View)
-//         * @see View#setMinimumHeight(int)
-//         */
-//        public static final int SCROLL_FLAG_EXIT_UNTIL_COLLAPSED = 0x2;
-//
-//        /**
-//         * When entering (scrolling on screen) the view will scroll on any downwards
-//         * scroll event, regardless of whether the scrolling view is also scrolling. This
-//         * is commonly referred to as the 'quick return' pattern.
-//         */
-//        public static final int SCROLL_FLAG_ENTER_ALWAYS = 0x4;
-//
-//        /**
-//         * An additional flag for 'enterAlways' which modifies the returning view to
-//         * only initially scroll back to it's collapsed height. Once the scrolling view has
-//         * reached the end of it's scroll range, the remainder of this view will be scrolled
-//         * into view. The collapsed height is defined by the view's minimum height.
-//         *
-//         * @see ViewCompat#getMinimumHeight(View)
-//         * @see View#setMinimumHeight(int)
-//         */
-//        public static final int SCROLL_FLAG_ENTER_ALWAYS_COLLAPSED = 0x8;
-//
-//        /**
-//         * Upon a scroll ending, if the view is only partially visible then it will be snapped
-//         * and scrolled to it's closest edge. For example, if the view only has it's bottom 25%
-//         * displayed, it will be scrolled off screen completely. Conversely, if it's bottom 75%
-//         * is visible then it will be scrolled fully into view.
-//         */
-//        public static final int SCROLL_FLAG_SNAP = 0x10;
-//
-//        /**
-//         * Internal flags which allows quick checking features
-//         */
-//        static final int FLAG_QUICK_RETURN = SCROLL_FLAG_SCROLL | SCROLL_FLAG_ENTER_ALWAYS;
-//        static final int FLAG_SNAP = SCROLL_FLAG_SCROLL | SCROLL_FLAG_SNAP;
-//
-//        int mScrollFlags = SCROLL_FLAG_SCROLL;
-//        Interpolator mScrollInterpolator;
-//
-//        public LayoutParams(Context c, AttributeSet attrs) {
-//            super(c, attrs);
-//            TypedArray a = c.obtainStyledAttributes(attrs, android.support.design.R.styleable.CustomCalendarContainer_LayoutParams);
-//            mScrollFlags = a.getInt(android.support.design.R.styleable.CustomCalendarContainer_LayoutParams_layout_scrollFlags, 0);
-//            a.recycle();
-//        }
-//
-//        public LayoutParams(int width, int height) {
-//            super(width, height);
-//        }
-//
-//        public LayoutParams(int width, int height, float weight) {
-//            super(width, height, weight);
-//        }
-//
-//        public LayoutParams(ViewGroup.LayoutParams p) {
-//            super(p);
-//        }
-//
-//        public LayoutParams(MarginLayoutParams source) {
-//            super(source);
-//        }
-//
-//        public LayoutParams(LinearLayout.LayoutParams source) {
-//            super(source);
-//        }
-//
-//        public LayoutParams(CustomCalendarContainer.LayoutParams source) {
-//            super(source);
-//            mScrollFlags = source.mScrollFlags;
-//            mScrollInterpolator = source.mScrollInterpolator;
-//        }
-//
-//        /**
-//         * Set the scrolling flags.
-//         *
-//         * @param flags bitwise int of {@link #SCROLL_FLAG_SCROLL},
-//         *             {@link #SCROLL_FLAG_EXIT_UNTIL_COLLAPSED}, {@link #SCROLL_FLAG_ENTER_ALWAYS},
-//         *             {@link #SCROLL_FLAG_ENTER_ALWAYS_COLLAPSED} and {@link #SCROLL_FLAG_SNAP }.
-//         *
-//         * @see #getScrollFlags()
-//         *
-//         * @attr ref android.support.design.R.styleable#CustomCalendarContainer_LayoutParams_layout_scrollFlags
-//         */
-//        public void setScrollFlags(@CustomCalendarContainer.LayoutParams.ScrollFlags int flags) {
-//            mScrollFlags = flags;
-//        }
-//
-//        /**
-//         * Returns the scrolling flags.
-//         *
-//         * @see #setScrollFlags(int)
-//         *
-//         * @attr ref android.support.design.R.styleable#CustomCalendarContainer_LayoutParams_layout_scrollFlags
-//         */
-//        @CustomCalendarContainer.LayoutParams.ScrollFlags
-//        public int getScrollFlags() {
-//            return mScrollFlags;
-//        }
-//    }
 
     /**
      * The default {@link Behavior} for {@link CustomCalendarContainer}. Implements the necessary nested
@@ -548,13 +386,13 @@ public class CustomCalendarContainer extends LinearLayout {
                 if ((pendingAction & PENDING_ACTION_WEEK) != 0) {
                     final int offset = -child.getUpNestedPreScrollRange();
                     if (animate) {
-                        animateOffsetTo(parent, child, offset);
+                        animateOffsetTo(parent, child, offset, null);
                     } else {
                         setHeaderTopBottomOffset(parent, child, offset);
                     }
                 } else if ((pendingAction & PENDING_ACTION_MONTH) != 0) {
                     if (animate) {
-                        animateOffsetTo(parent, child, 0);
+                        animateOffsetTo(parent, child, 0, null);
                     } else {
                         setHeaderTopBottomOffset(parent, child, 0);
                     }
@@ -752,7 +590,7 @@ public class CustomCalendarContainer extends LinearLayout {
                 if (dy < 0) {
                     // We're scrolling down
                     min = -child.getTotalScrollRange();
-                    max = min + child.getDownNestedPreScrollRange();
+                    max = min;// + child.getDownNestedPreScrollRange();
                 } else {
                     // We're scrolling up
                     min = -child.getUpNestedPreScrollRange();
@@ -809,12 +647,12 @@ public class CustomCalendarContainer extends LinearLayout {
                 // upto our 'collapsed' offset
                 if (velocityY < 0) {
                     // We're scrolling down
-                    final int targetScroll = -child.getTotalScrollRange()
-                            + child.getDownNestedPreScrollRange();
+                    final int targetScroll = -child.getTotalScrollRange();
+                           // + child.getDownNestedPreScrollRange();
                     if (getTopBottomOffsetForScrollingSibling() < targetScroll) {
                         // If we're currently not expanded more than the target scroll, we'll
                         // animate a fling
-                        animateOffsetTo(coordinatorLayout, child, targetScroll);
+                        animateOffsetTo(coordinatorLayout, child, targetScroll, null);
                         flung = true;
                     }
                 } else {
@@ -823,7 +661,7 @@ public class CustomCalendarContainer extends LinearLayout {
                     if (getTopBottomOffsetForScrollingSibling() > targetScroll) {
                         // If we're currently not expanded less than the target scroll, we'll
                         // animate a fling
-                        animateOffsetTo(coordinatorLayout, child, targetScroll);
+                        animateOffsetTo(coordinatorLayout, child, targetScroll, null);
                         flung = true;
                     }
                 }
@@ -990,7 +828,8 @@ public class CustomCalendarContainer extends LinearLayout {
         }
 
         private void animateOffsetTo(final CoordinatorLayout coordinatorLayout,
-                                     final CustomCalendarContainer child, final int offset) {
+                                     final CustomCalendarContainer child, final int offset,
+                                     Animator.AnimatorListener animatorListener) {
             final int currentOffset = getTopBottomOffsetForScrollingSibling();
             if (currentOffset == offset) {
                 if (mAnimator != null && mAnimator.isRunning()) {
@@ -1013,7 +852,10 @@ public class CustomCalendarContainer extends LinearLayout {
             } else {
                 mAnimator.cancel();
             }
-
+            mAnimator.removeAllListeners();
+            if (animatorListener != null) {
+                mAnimator.addListener(animatorListener);
+            }
             // Set the duration based on the amount of dips we're travelling in
             final float distanceDp = Math.abs(currentOffset - offset) /
                     coordinatorLayout.getResources().getDisplayMetrics().density;
@@ -1033,22 +875,41 @@ public class CustomCalendarContainer extends LinearLayout {
             return null;
         }
 
-        private void snapToChildIfNeeded(CoordinatorLayout coordinatorLayout, CustomCalendarContainer calendarContainer) {
+        private void snapToChildIfNeeded(CoordinatorLayout coordinatorLayout, final CustomCalendarContainer calendarContainer) {
             final int offset = getTopBottomOffsetForScrollingSibling();
             final View offsetChild = getChildOnOffset(calendarContainer, offset);
             if (offsetChild != null) {
                 final CustomCalendarContainer.LayoutParams lp = (CustomCalendarContainer.LayoutParams) offsetChild.getLayoutParams();
-                if (offsetChild instanceof LifterView) {
+                if (offsetChild instanceof LifterToolbarLayout) {
                     // We're set the snap, so animate the offset to the nearest edge
                     int childTop = -offsetChild.getTop();
                     int childBottom = -offsetChild.getBottom();
 
                     childBottom += ViewCompat.getMinimumHeight(offsetChild);
 
-                    final int newOffset = offset < (childBottom + childTop) / 2
-                            ? childBottom : childTop;
+                    final boolean goUp = offset < (childBottom + childTop) / 2;
+                    final int newOffset = goUp ? childBottom : childTop;
                     animateOffsetTo(coordinatorLayout, calendarContainer,
-                            constrain(newOffset, -calendarContainer.getTotalScrollRange(), 0));
+                            constrain(newOffset, -calendarContainer.getTotalScrollRange(), 0),
+                            new Animator.AnimatorListener() {
+                                @Override
+                                public void onAnimationStart(Animator animation) {
+                                }
+                                @Override
+                                public void onAnimationEnd(Animator animation) {
+                                    if (goUp) {
+                                        calendarContainer.goUp();
+                                    } else {
+                                        calendarContainer.goDown();
+                                    }
+                                }
+                                @Override
+                                public void onAnimationCancel(Animator animation) {
+                                }
+                                @Override
+                                public void onAnimationRepeat(Animator animation) {
+                                }
+                            });
                 }
             }
         }
@@ -1296,18 +1157,18 @@ public class CustomCalendarContainer extends LinearLayout {
             if (header instanceof CustomCalendarContainer) {
                 final CustomCalendarContainer abl = (CustomCalendarContainer) header;
                 final int totalScrollRange = abl.getTotalScrollRange();
-                final int preScrollDown = abl.getDownNestedPreScrollRange();
+//                final int preScrollDown = abl.getDownNestedPreScrollRange();
                 final int offset = getCustomCalendarContainerOffset(abl);
 
-                if (preScrollDown != 0 && (totalScrollRange + offset) <= preScrollDown) {
-                    // If we're in a pre-scroll down. Don't use the offset at all.
-                    return 0;
-                } else {
-                    final int availScrollRange = totalScrollRange - preScrollDown;
+//                if (preScrollDown != 0 && (totalScrollRange + offset) <= preScrollDown) {
+//                    // If we're in a pre-scroll down. Don't use the offset at all.
+//                    return 0;
+//                } else {
+                    final int availScrollRange = totalScrollRange;// - preScrollDown;
                     if (availScrollRange != 0) {
                         // Else we'll use a interpolated ratio of the overlap, depending on offset
                         return 1f + (offset / (float) availScrollRange);
-                    }
+//                    }
                 }
             }
             return 0f;
